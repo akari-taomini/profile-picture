@@ -533,7 +533,9 @@ export function startLibrary() {
   window.addEventListener('pagehide', dispose, { once: true });
   mount(); timer = W.setInterval(mount, 3000);
 
- return W[KEY];
+ const moduleInstance = W[KEY];
+ moduleInstance.isActive = () => !stopped && W[KEY] === moduleInstance;
+ return moduleInstance;
 }
 
 export function startTemporary() {
@@ -1203,6 +1205,7 @@ button.ti-btn.primary{background:var(--SmartThemeQuoteColor,#657565);color:#fff;
     if (!item) {
       item = DOC.createElement('div');
       item.id = MENU_ITEM_ID;
+      item.dataset.taoToolboxOwnedMenu = "temporary";
       item.className = 'list-group-item flex-container flexGap5 interactable';
       item.tabIndex = 0;
       item.setAttribute('role', 'button');
@@ -1337,7 +1340,7 @@ button.ti-btn.primary{background:var(--SmartThemeQuoteColor,#657565);color:#fff;
 
   init();
 
- return {dispose:cleanup, open:openPanel};
+ return {dispose:cleanup, open:openPanel, isActive:()=>!state.cleaned};
 }
 
 export function startHD() {
@@ -1584,7 +1587,7 @@ export function startHD() {
   scan();
   console.log('[高清头像 4.5.9] 已加载');
 
- return {dispose:cleanup};
+ return {dispose:cleanup,isActive:()=>!state.cleaned && WIN[INSTANCE]===cleanup};
 }
 
 export function startColor() {
@@ -1922,7 +1925,7 @@ export function startColor() {
   (doc.head || doc.documentElement).append(style,effect);
   doc.body.append(panel,probe,mini);
   const button = doc.createElement('div');
-  button.id = 'th-color-menu'; button.className = 'list-group-item flex-container flexGap5 interactable';
+  button.id = 'th-color-menu'; button.dataset.taoToolboxOwnedMenu = 'color'; button.className = 'list-group-item flex-container flexGap5 interactable';
   button.tabIndex=0; button.setAttribute('role','button'); button.setAttribute('aria-haspopup','dialog'); button.setAttribute('aria-controls',ID);
   button.innerHTML='<i class="fa-solid fa-palette fa-fw" aria-hidden="true"></i><span></span>';
   // 样式表只建立一次；拖动色环时只更新两条规则的值，避免反复解析复杂选择器。
@@ -2881,7 +2884,7 @@ export function startColor() {
     window.removeEventListener('pagehide',dispose);window.removeEventListener('unload',dispose);
     if (host[KEY]===instance) delete host[KEY];
   }
-  const instance={dispose,open};host[KEY]=instance;
+  const instance={dispose,open,isActive:()=>!disposed && host[KEY]===instance};host[KEY]=instance;
   button.addEventListener('click',open);
   mini.addEventListener('click',event=>{
     if(event.detail!==0 && host.performance.now()<miniSuppressUntil) {event.preventDefault();return;}
