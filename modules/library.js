@@ -252,13 +252,15 @@ export function startLibrary() {
     grid.after(pages);
     if (!count) grid.append(element('p', 'tal-empty', '还没有收藏。先保存当前头像，或添加喜欢的图片。'));
     const pending = [];
+    // showModal() renders outside the root filter. These previews must not
+    // receive the reverse filter intended for images inside the filtered page.
     function setPreview(img, blob) {
       if (stopped || renderToken !== token || !img.isConnected) return;
       const url = W.URL.createObjectURL(blob); urls.add(url); img.src = url;
     }
     for (const item of items) {
-      const card = element('article','tal-card'), img = element('img','th-color-preserve');
-      img.setAttribute('data-th-color-preserve',''); img.alt = item.name; img.loading = 'lazy'; img.decoding = 'async';
+      const card = element('article','tal-card'), img = element('img','tal-preview th-color-decorative');
+      img.setAttribute('data-th-color-decorative',''); img.alt = item.name; img.loading = 'lazy'; img.decoding = 'async';
       const title = element('div','tal-name',item.name); title.title = item.name;
       card.append(img,title);
       const row = element('div','tal-row'); card.append(row);
@@ -368,7 +370,7 @@ export function startLibrary() {
       select.setAttribute('aria-label',label);
       const blank = element('option','','请选择头像'); blank.value = ''; select.append(blank);
       for (const item of items) { const o = element('option','',item.name); o.value = item.id; select.append(o); }
-      const preview = element('img','th-color-preserve'); preview.setAttribute('data-th-color-preserve',''); preview.alt = label+'预览'; preview.hidden = true; preview.style.cssText = 'width:120px;height:160px;object-fit:contain';
+      const preview = element('img','tal-preview th-color-decorative'); preview.setAttribute('data-th-color-decorative',''); preview.alt = label+'预览'; preview.hidden = true; preview.style.cssText = 'width:120px;height:160px;object-fit:contain';
       select.addEventListener('change',async () => {
         const selected = select.value; preview.hidden = true;
         if (!selected) return;
@@ -478,6 +480,7 @@ export function startLibrary() {
     #tao-avatar-library-entry{cursor:pointer;gap:5px;align-items:center;justify-content:center}
     #tao-avatar-library-dialog{box-sizing:border-box;width:min(700px,94vw);max-width:94vw;max-height:86vh;max-height:86dvh;padding:18px;border:1px solid var(--SmartThemeBorderColor,#888);border-radius:16px;background:var(--SmartThemeBlurTintColor,#28282c);color:var(--SmartThemeBodyColor,#eee);font:inherit;overflow:auto;box-shadow:0 12px 50px #0006}
     #tao-avatar-library-dialog::backdrop{background:#0008}
+    #tao-avatar-library-dialog:modal img.tal-preview{filter:none!important}
     #tao-avatar-library-dialog .tal-header,#tao-avatar-library-dialog .tal-toolbar,#tao-avatar-library-dialog .tal-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     #tao-avatar-library-dialog .tal-header{justify-content:space-between;margin-bottom:14px}
     #tao-avatar-library-dialog .tal-header strong{overflow-wrap:anywhere;flex:1}
