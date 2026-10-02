@@ -1,12 +1,12 @@
-// Native extension module: window is the Tavern host, even when Tavern is embedded.
+// Based on the working standalone 4.5.10. Native extension window replaces the helper iframe parent.
 export function startHD() {
 
   'use strict';
   const SCRIPT_WIN = window;
   const WIN = window;
   const DOC = WIN.document;
-  // Keep the original chat behavior and include Tavern's character editor preview.
-  // Uploaded data/blob previews remain untouched because parseSource rejects them.
+  // 聊天头像与角色简介/编辑页的大头像共用原图处理。
+  // 上传中的 data/blob 预览由 parseSource 排除，不改图片裁剪和点击事件。
   const SELECTOR = '.mesAvatarWrapper img, #avatar_load_preview';
   const INSTANCE = '__hdAvatar458Cleanup';
   // Re-running this version must not leave two observers competing for src.
@@ -207,7 +207,7 @@ export function startHD() {
             else owner.eventRemoveListener?.(event, callback);
           });
         }
-      } catch (error) { console.warn('[头像工具箱 · 高清头像] 事件绑定失败', name, error); }
+      } catch (error) { console.warn('[高清头像 4.5.10] 事件绑定失败', name, error); }
     }
   }
 
@@ -243,7 +243,26 @@ export function startHD() {
   SCRIPT_WIN.addEventListener('beforeunload', cleanup, { once: true, signal: state.abort.signal });
   bindTavernEvents();
   scan();
-  console.log('[头像工具箱 · 高清头像] 已加载');
+  console.log('[高清头像 4.5.10] 已加载');
 
- return {dispose:cleanup,isActive:()=>!state.cleaned && WIN[INSTANCE]===cleanup};
+  function editorStatus() {
+    const img = DOC.getElementById('avatar_load_preview');
+    if (!img) return '简介页：未找到头像，请先打开角色简介页。';
+    const rec = state.records.get(img);
+    const size = img.naturalWidth ? `（${img.naturalWidth}×${img.naturalHeight}）` : '';
+    if (rec && rec.failed === token(rec.info)) return '简介页：原图请求失败，已回退原来源' + size;
+    if (!img.complete) return '简介页：图片正在加载';
+    let url;
+    try { url = new WIN.URL(img.currentSrc || img.src, DOC.baseURI); } catch {}
+    if (url && /^\/characters\//i.test(url.pathname) && img.naturalWidth) return '简介页：浏览器已载入角色原图' + size;
+    if (url && /\/thumbnail\/?$/i.test(url.pathname)) return '简介页：浏览器当前仍显示缩略图' + size;
+    return '简介页：尚未识别到角色原图' + size;
+  }
+  function refreshEditor() {
+    state.generation.avatar++;
+    state.generation.persona++;
+    scan();
+    return '已按高清脚本 4.5.10 重新处理头像。';
+  }
+  return {dispose:cleanup,refreshEditor,editorStatus,version:'4.5.10',isActive:()=>!state.cleaned && WIN[INSTANCE]===cleanup};
 }
